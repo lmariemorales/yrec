@@ -68,7 +68,8 @@ c     NOTE: irad=0 does not add radiation; irad=1 adds radiation
       ZTAB=Z
 
 C       R=RHOOFP06(X,ZTAB,T6,P12,IRAD)  ! KC 2025-05-31
-      R=RHOOFP06(X,T6,P12,IRAD)
+C      R=RHOOFP06(X,T6,P12,IRAD)
+      R=RHOPT06(X,T6,P12,IRAD)
       IF(R.LE.-998.0D0)THEN
          RETURN 1
       ENDIF
