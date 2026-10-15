@@ -24,12 +24,24 @@ C       - radiation pressure > 50% of total (inversion poorly conditioned)
 C       - X, log T6 or log P outside the table grid
 C       - any of the 27 table nodes used is -999 (near OPAL's coverage edge)
 C
-C     Otherwise: 3-point (quadratic) Lagrange interpolation of log10(rho),
-C     first in log10 P, then in log10 T6, then in X (same order of
-C     interpolation as OPAL's own ESAC06).
+C     Otherwise: 3-point (quadratic) Lagrange interpolation, first of
+C     log10(rho) in log10 P, then in log10 T6, then -- in X -- of the
+C     SPECIFIC VOLUME 1/rho.  At fixed P and T an ionized gas has
+C     1/rho proportional to 1/mu ~ (3+5X), i.e. LINEAR in X, so quadratic
+C     interpolation of 1/rho in X is exact there.  (Interpolating log rho
+C     in X instead gave a systematic ~2e-4 dex error at X~0.7, which
+C     shifted the solar model's L by ~0.45%.)  OPAL's ESAC06 is exact in
+C     the same limit because it interpolates P/P0, also linear in 1/mu.
 C
 C     A running count of calls and fallbacks is written to the .short
-C     file every 500000 calls.
+C     file every NREP calls.
+C
+C     DIAGNOSTIC MODE (ldbg=.true.): every time the table is used, the
+C     original RHOOFP06 is ALSO called at the same point and the two
+C     log10(rho) values are compared.  The model still uses the TABLE
+C     value; the comparison only observes.  Counts of differences above
+C     1e-5, 1e-4, 1e-3 dex and the location of the largest difference are
+C     added to the periodic report.  Set ldbg=.false. for production.
 C
 C--------------------------------------------------------------------------
       function rhopt06(x,t6,p12,irad)
@@ -41,17 +53,30 @@ C--------------------------------------------------------------------------
      .               plmin,dlp,iptb06
       COMMON/LUOUT/ILAST,IDEBUG,ITRACK,ISHORT,IMILNE,IMODPT,ISTOR,IOWR
       dimension ft(3),fx(3)
+      logical ldbg
+      parameter (ldbg=.false.)
+      parameter (nrep=50000)
       data sigmacc/1.8914785D-3/
       data ncall,nfall/0,0/
+      data ncmp,n5,n4,n3,nrf/0,0,0,0,0/
+      data dmax,xmax,tmax,pmax,fmax/0.0D0,0.0D0,0.0D0,0.0D0,0.0D0/
       save
 
 C     ---- build the table on the first call
       if (iptb06 .ne. 12345678) call bldpt06
 
       ncall = ncall + 1
-      if (mod(ncall,500000) .eq. 0) then
+      if (mod(ncall,nrep) .eq. 0) then
          write(ISHORT,'(" RHOPT06: calls=",i12,"  fallbacks to",
      .        " RHOOFP06=",i12)') ncall, nfall
+         if (ldbg) then
+            write(ISHORT,'(" RHOPT06 DBG: compared=",i11,
+     .        "  |dlogrho|>1e-5:",i10,"  >1e-4:",i10,"  >1e-3:",i10,
+     .        "  ref failed:",i8)') ncmp, n5, n4, n3, nrf
+            write(ISHORT,'(" RHOPT06 DBG: max |dlogrho|=",1pe10.3,
+     .        " at X=",0pf7.4," logT=",f7.4," logP(cgs)=",f8.4,
+     .        " Prad/P=",1pe10.3)') dmax, xmax, tmax, pmax, fmax
+         endif
       endif
 
 C     ---- cases handed to the original routine
@@ -106,7 +131,7 @@ C     ---- composition stencil: xgr INcreases with index
       endif
       k0 = max(1, min(k0, mx-2))
 
-C     ---- interpolate: in log P, then log T, then X
+C     ---- interpolate: log rho in log P, then in log T; 1/rho in X
       do kk=1,3
          k = k0 + kk - 1
          do ii=1,3
@@ -119,10 +144,35 @@ C     ---- interpolate: in log P, then log T, then X
          enddo
          fx(kk) = q3pt06(tl, tlgr(i0),tlgr(i0+1),tlgr(i0+2),
      .            ft(1),ft(2),ft(3))
+C        log rho -> specific volume 1/rho at this X node
+         fx(kk) = 10.0D0**(-fx(kk))
       enddo
-      rl = q3pt06(x, xgr(k0),xgr(k0+1),xgr(k0+2), fx(1),fx(2),fx(3))
+      v  = q3pt06(x, xgr(k0),xgr(k0+1),xgr(k0+2), fx(1),fx(2),fx(3))
+      if (v .le. 0.0D0) goto 900
+      rl = -dlog10(v)
 
       rhopt06 = 10.0D0**rl
+
+C     ---- diagnostic: compare with the original inversion (observe only)
+      if (ldbg) then
+         rref = rhoofp06(x,t6,p12,irad)
+         ncmp = ncmp + 1
+         if (rref .gt. 0.0D0) then
+            d = abs(rl - dlog10(rref))
+            if (d .gt. 1.0D-5) n5 = n5 + 1
+            if (d .gt. 1.0D-4) n4 = n4 + 1
+            if (d .gt. 1.0D-3) n3 = n3 + 1
+            if (d .gt. dmax) then
+               dmax = d
+               xmax = x
+               tmax = tl + 6.0D0
+               pmax = pl + 12.0D0
+               fmax = pr/p12
+            endif
+         else
+            nrf = nrf + 1
+         endif
+      endif
       return
 
 C     ---- original iterative inversion
