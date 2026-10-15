@@ -7,15 +7,19 @@ C
 C     Density from (X, T6, total P) for the OPAL 2006 EOS, by lookup in
 C     the precomputed inverted table built by BLDPT06.
 C
-C     Drop-in replacement for the call RHOOFP06(X,T6,P12,IRAD) in OEQOS06
-C     (irad=1): same inputs, same output (rho in g/cc), same failure value
-C     (-999) because every doubtful case is handed to RHOOFP06 itself.
+C     Drop-in replacement for RHOOFP06(X,T6,P12,IRAD) in OEQOS06: same
+C     arguments, same output (rho in g/cc), same failure value (-999)
+C     because every doubtful case is handed to RHOOFP06 itself.
 C
-C     Inputs:  x   hydrogen mass fraction
-C              t6  temperature / 1e6 K
-C              p12 TOTAL pressure (gas + radiation) in Mbar (1e12 dyn/cm2)
+C     Inputs:  x    hydrogen mass fraction
+C              t6   temperature / 1e6 K
+C              p12  pressure in Mbar (1e12 dyn/cm2); TOTAL (gas+radiation)
+C                   when irad=1, gas only when irad=0 -- as in RHOOFP06
+C              irad 1 = pressure includes radiation, 0 = it does not
 C
-C     Falls back to the original RHOOFP06 when:
+C     The table is built with irad=1 only (total pressure), so it is used
+C     only when irad=1.  Falls back to the original RHOOFP06 when:
+C       - irad is not 1
 C       - radiation pressure > 50% of total (inversion poorly conditioned)
 C       - X, log T6 or log P outside the table grid
 C       - any of the 27 table nodes used is -999 (near OPAL's coverage edge)
@@ -28,7 +32,7 @@ C     A running count of calls and fallbacks is written to the .short
 C     file every 500000 calls.
 C
 C--------------------------------------------------------------------------
-      function rhopt06(x,t6,p12)
+      function rhopt06(x,t6,p12,irad)
 
       parameter (mx=5,nt=197)
       parameter (npt=521)
@@ -44,7 +48,6 @@ C--------------------------------------------------------------------------
 C     ---- build the table on the first call
       if (iptb06 .ne. 12345678) call bldpt06
 
-      irad  = 1
       ncall = ncall + 1
       if (mod(ncall,500000) .eq. 0) then
          write(ISHORT,'(" RHOPT06: calls=",i12,"  fallbacks to",
@@ -52,6 +55,8 @@ C     ---- build the table on the first call
       endif
 
 C     ---- cases handed to the original routine
+C     table holds rho(total P) only, built with irad=1
+      if (irad .ne. 1) goto 900
       if (p12 .le. 0.0D0) goto 900
 C     radiation fraction, same expression as RHOOFP06 (in Mbar)
       pr = 4.0D0/3.0D0*sigmacc*t6**4
