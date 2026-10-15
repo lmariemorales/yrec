@@ -1,0 +1,140 @@
+C$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+C
+C     RHOPT06
+C
+C$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+C
+C     Density from (X, T6, total P) for the OPAL 2006 EOS, by lookup in
+C     the precomputed inverted table built by BLDPT06.
+C
+C     Drop-in replacement for the call RHOOFP06(X,T6,P12,IRAD) in OEQOS06
+C     (irad=1): same inputs, same output (rho in g/cc), same failure value
+C     (-999) because every doubtful case is handed to RHOOFP06 itself.
+C
+C     Inputs:  x   hydrogen mass fraction
+C              t6  temperature / 1e6 K
+C              p12 TOTAL pressure (gas + radiation) in Mbar (1e12 dyn/cm2)
+C
+C     Falls back to the original RHOOFP06 when:
+C       - radiation pressure > 50% of total (inversion poorly conditioned)
+C       - X, log T6 or log P outside the table grid
+C       - any of the 27 table nodes used is -999 (near OPAL's coverage edge)
+C
+C     Otherwise: 3-point (quadratic) Lagrange interpolation of log10(rho),
+C     first in log10 P, then in log10 T6, then in X (same order of
+C     interpolation as OPAL's own ESAC06).
+C
+C     A running count of calls and fallbacks is written to the .short
+C     file every 500000 calls.
+C
+C--------------------------------------------------------------------------
+      function rhopt06(x,t6,p12)
+
+      parameter (mx=5,nt=197)
+      parameter (npt=521)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      common/ptab06/ rlpt(npt,nt,mx),plgr(npt),tlgr(nt),xgr(mx),
+     .               plmin,dlp,iptb06
+      COMMON/LUOUT/ILAST,IDEBUG,ITRACK,ISHORT,IMILNE,IMODPT,ISTOR,IOWR
+      dimension ft(3),fx(3)
+      data sigmacc/1.8914785D-3/
+      data ncall,nfall/0,0/
+      save
+
+C     ---- build the table on the first call
+      if (iptb06 .ne. 12345678) call bldpt06
+
+      irad  = 1
+      ncall = ncall + 1
+      if (mod(ncall,500000) .eq. 0) then
+         write(ISHORT,'(" RHOPT06: calls=",i12,"  fallbacks to",
+     .        " RHOOFP06=",i12)') ncall, nfall
+      endif
+
+C     ---- cases handed to the original routine
+      if (p12 .le. 0.0D0) goto 900
+C     radiation fraction, same expression as RHOOFP06 (in Mbar)
+      pr = 4.0D0/3.0D0*sigmacc*t6**4
+      if (pr/p12 .gt. 0.5D0) goto 900
+      if (x .lt. xgr(1) .or. x .gt. xgr(mx)) goto 900
+      tl = dlog10(t6)
+      if (tl .gt. tlgr(1) .or. tl .lt. tlgr(nt)) goto 900
+      pl = dlog10(p12)
+      fp = (pl-plmin)/dlp + 1.0D0
+      if (fp .lt. 1.0D0 .or. fp .gt. dble(npt)) goto 900
+
+C     ---- pressure stencil (uniform grid): j0, j0+1, j0+2 centred on pl
+      j0 = nint(fp) - 1
+      j0 = max(1, min(j0, npt-2))
+
+C     ---- temperature stencil: tlgr DEcreases with index.
+C          bisection for tlgr(ilo) >= tl >= tlgr(ihi), ihi = ilo+1
+      ilo = 1
+      ihi = nt
+   10 if (ihi-ilo .gt. 1) then
+         imid = (ilo+ihi)/2
+         if (tl .le. tlgr(imid)) then
+            ilo = imid
+         else
+            ihi = imid
+         endif
+         goto 10
+      endif
+C     third point on whichever side tl is closer to
+      if (tl-tlgr(ihi) .lt. tlgr(ilo)-tl) then
+         i0 = ilo
+      else
+         i0 = ilo - 1
+      endif
+      i0 = max(1, min(i0, nt-2))
+
+C     ---- composition stencil: xgr INcreases with index
+      k = 1
+   20 if (k .lt. mx-1 .and. x .gt. xgr(k+1)) then
+         k = k + 1
+         goto 20
+      endif
+      if (x-xgr(k) .lt. xgr(k+1)-x) then
+         k0 = k - 1
+      else
+         k0 = k
+      endif
+      k0 = max(1, min(k0, mx-2))
+
+C     ---- interpolate: in log P, then log T, then X
+      do kk=1,3
+         k = k0 + kk - 1
+         do ii=1,3
+            i = i0 + ii - 1
+            do jj=1,3
+               if (rlpt(j0+jj-1,i,k) .lt. -998.0D0) goto 900
+            enddo
+            ft(ii) = q3pt06(pl, plgr(j0),plgr(j0+1),plgr(j0+2),
+     .               rlpt(j0,i,k),rlpt(j0+1,i,k),rlpt(j0+2,i,k))
+         enddo
+         fx(kk) = q3pt06(tl, tlgr(i0),tlgr(i0+1),tlgr(i0+2),
+     .            ft(1),ft(2),ft(3))
+      enddo
+      rl = q3pt06(x, xgr(k0),xgr(k0+1),xgr(k0+2), fx(1),fx(2),fx(3))
+
+      rhopt06 = 10.0D0**rl
+      return
+
+C     ---- original iterative inversion
+  900 continue
+      nfall   = nfall + 1
+      rhopt06 = rhoofp06(x,t6,p12,irad)
+      return
+      end
+
+C--------------------------------------------------------------------------
+C     3-point Lagrange (quadratic) interpolation through (x1,f1),(x2,f2),
+C     (x3,f3), evaluated at x.  Nodes need not be equally spaced.
+C--------------------------------------------------------------------------
+      function q3pt06(x,x1,x2,x3,f1,f2,f3)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      q3pt06 = f1*(x-x2)*(x-x3)/((x1-x2)*(x1-x3))
+     .       + f2*(x-x1)*(x-x3)/((x2-x1)*(x2-x3))
+     .       + f3*(x-x1)*(x-x2)/((x3-x1)*(x3-x2))
+      return
+      end
