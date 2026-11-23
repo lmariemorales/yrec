@@ -27,10 +27,10 @@
  LFIRST(1) = .TRUE. ! T = use stored starting model F = use result of prior run
  RSCLM(1) = -1.00 ! If positive, rescale to this mass (Msun)
  RSCLCM(1) = -0.8D0 ! If positive, rescale to this core mass (CHeB only)
- RSCLX(1) = 0.71104 ! Starting guess (rotating gray-atmosphere template calibration) -- If positive, rescale to this hydrogen.
+ RSCLX(1) = 0.71103 ! Starting guess (rotating gray-atmosphere template calibration) -- If positive, rescale to this hydrogen.
  RSCLZ(1) = 0.01822 ! Starting guess -- If positive, rescale to this metallicity.
  NMODLS(1) = 2 ! Stop after this number of models. An initial rescaling with 2 models is recommended, followed by an evolve run
- XENV0A(1) = 0.71104 ! Envelope abundance label
+ XENV0A(1) = 0.71103 ! Envelope abundance label
  ZENV0A(1) = 0.01822 ! Envelope abundance label
  CMIXLA(1) = 1.9028 ! Rescale to this mixing length (or use for the run).
 ! YREC uses an outer fitting point.
@@ -41,7 +41,7 @@
  KINDRN(2) = 1
  LFIRST(2) = .FALSE.
  NMODLS(2) = 5000 ! Raised from 1000: rotating, disk-locked pre-MS takes many small steps
- XENV0A(2) = 0.71104
+ XENV0A(2) = 0.71103
  ZENV0A(2) = 0.01822
  CMIXLA(2) = 1.9028
  ENDAGE(2) = 1.0D8 ! Run stops if NMODLS(I) is reached or this age is reached
@@ -50,7 +50,7 @@
  KINDRN(3) = 1
  LFIRST(3) = .FALSE.
  NMODLS(3) = 5000 ! Must reach ENDAGE before this limit, or the calibration is done at the wrong age
- XENV0A(3) = 0.71104
+ XENV0A(3) = 0.71103
  ZENV0A(3) = 0.01822
  CMIXLA(3) = 1.9028
  ENDAGE(3) = 4.568D9 ! Run stops if NMODLS(I) is reached or this age is reached
