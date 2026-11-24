@@ -96,6 +96,20 @@ C RUN OLD WINDLAW IF LMWIND = FALSE
      *                  TEFFL,WOLD,WIND1,WIND2)
          GOTO 9999
       ENDIF
+C 11/24/26 LMM
+C code added: weakened magnetic braking (van Saders et al. 2016), as in
+C mwind.f.  Ro is taken at the start of the step (WOLD); above
+C ROCRIT_WMB (in solar units) both wind terms are zero.
+      IF(LWMB)THEN
+         TCZ = TAUCZ0+FRACSTEP*(TAUCZ-TAUCZ0)
+         IF(TCZ.GT.0.0D0 .AND. WOLD.GT.0.0D0)THEN
+            IF(PMMSOLW*PMMSOLTAU/(WOLD*TCZ).GT.ROCRIT_WMB)THEN
+               WIND1 = 0.0D0
+               WIND2 = 0.0D0
+               GOTO 9999
+            ENDIF
+         ENDIF
+      ENDIF
 C
 C G Somers 8/17 CREATE ROTATION DUMMY VARIABLES.
       WFIRST = WOLD

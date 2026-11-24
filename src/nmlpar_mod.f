@@ -253,6 +253,13 @@ C in main.f, making 235 members.  See the note there.
       LOGICAL*4 :: LMWIND = .FALSE.
       LOGICAL*4 :: LROSSBY = .TRUE.
       LOGICAL*4 :: LBSCALE = .FALSE.
+C 11/24/26 LMM
+C code added: weakened magnetic braking (van Saders et al. 2016).
+C LWMB switches it on; ROCRIT_WMB is the critical Rossby number in units
+C of the solar value, Ro/Ro_sun = (PMMSOLW*PMMSOLTAU)/(OMEGA*TAUCZ).
+C Above it the wind torque is zero.
+      LOGICAL*4 :: LWMB = .FALSE.
+      REAL*8    :: ROCRIT_WMB = 1.0D0
       LOGICAL*4 :: LPULSE = .FALSE.
       INTEGER*4 :: IPVER = 1
       LOGICAL*4 :: LSCV = .FALSE.

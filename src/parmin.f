@@ -423,6 +423,8 @@ C so setting it had no effect. No namelist file sets it.
      *   AWIND,PMMA,PMMB,PMMC,PMMD,PMMM,PMMJD,PMMMD,
 C MHP 8/17 ADDED WMAX_SUN
      *   PMMSOLP,PMMSOLW,PMMSOLTAU,LCODM,CODM,WMAX_SUN,
+C 11/24/26 LMM: weakened magnetic braking (vS16)
+     *   LWMB,ROCRIT_WMB,
 C G Somers 6/14
      *   XSLI6,XSLI7,XSBE91,XSBE92,XSBE93,
      *   LXLI6,LXLI7,LXBE91,LXBE92,LXBE93,

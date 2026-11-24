@@ -83,6 +83,18 @@ C 10/30/26 MHP via Claude
 C code changed to honour the wind switch, as WIND does.  SECULR calls
 C MWIND whatever LJDOT0 is, so a run with LJDOT0 = F still lost J here.
       IF(.NOT.LJDOT) GOTO 9999
+C 11/24/26 LMM
+C code added: weakened magnetic braking (van Saders et al. 2016).  Once
+C the Rossby number, relative to the Sun, exceeds ROCRIT_WMB the wind
+C torque is zero and the star conserves angular momentum.  Ro is taken
+C at the start of the step; vS16 use a sharp cut with no smoothing.
+C Skipped when there is no surface convection zone (TAUCZ = 0).
+      IF(LWMB)THEN
+         TCZ = TAUCZ0+FRACSTEP*(TAUCZ-TAUCZ0)
+         IF(TCZ.GT.0.0D0 .AND. OMEGAS.GT.0.0D0)THEN
+            IF(PMMSOLW*PMMSOLTAU/(OMEGAS*TCZ).GT.ROCRIT_WMB) GOTO 9999
+         ENDIF
+      ENDIF
 C
 C ADD ROSSBY SCALING IF DESIRED.
       IF(LROSSBY)THEN
