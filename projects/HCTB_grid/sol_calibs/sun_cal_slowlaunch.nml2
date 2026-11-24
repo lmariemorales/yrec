@@ -32,11 +32,11 @@
  ITDIF1=1 ! Iterations between structure equations and rotational mixing (1=none). This is the same as NITER3 unless >1. Recommend 2 for rotational mixing models.
  FCORR0 = 0.6 ! The code predicts corrections to the structure variables, which can initially be overestimated. This is the iteration 1 scale factor by which they are multipled.          
  FCORRI = 0.05 ! This is the increment to the factor for each successive interation, for example it reaches the max of 1 in 8 steps if (0.6,0.05). larger factor = faster convergence, less stable
- HTOLER(1,1) = 6.0D-9 ! Convergence tol for log P. If the maximum correction in a given stage anywhere is below this threshold (for all 4 state variables), the run is converged. 
- HTOLER(2,1) = 4.5D-9 ! Convergence tol for log T.
- HTOLER(3,1) = 3.0D-9 ! Convergence tol for log R.  
- HTOLER(4,1) = 9.0D-9 ! Convergence tol for L/Ltot. Note: all are local  
- HTOLER(5,1) = 3.0D-9 ! If the difference between analytic and numerical derivatives is better than this, iteration is skipped. (5,1) is for P+R   
+ HTOLER(1,1) = 6.0D-7 ! Convergence tol for log P. If the maximum correction in a given stage anywhere is below this threshold (for all 4 state variables), the run is converged. 
+ HTOLER(2,1) = 4.5D-7 ! Convergence tol for log T.
+ HTOLER(3,1) = 3.0D-7 ! Convergence tol for log R.  
+ HTOLER(4,1) = 9.0D-7 ! Convergence tol for L/Ltot. Note: all are local  
+ HTOLER(5,1) = 3.0D-7 ! If the difference between analytic and numerical derivatives is better than this, iteration is skipped. (5,1) is for P+R   
  HTOLER(5,2) = 2.5E-7 ! If the difference between analytic and numerical derivatives is better than this, iteration is skipped. (5,2) is for T+L   
 
 ! Convective mixing parameters
@@ -124,7 +124,7 @@
   
 ! Spatial tolerances for allocating mesh points, replaces HPTTOL
  TOL_DM_MIN = 0.5D-10 ! Minimum spacing in mass between points (most important for thin outer fitting points)
- TOL_DM_MAX = 0.04 ! Maximum spacing in log M; important for stellar cores
+ TOL_DM_MAX = 0.02 ! Maximum spacing in log M; important for stellar cores
  TOL_DL_MAX = 0.005 ! Maximum spacing in L/Lsurf; important for energy generating regions
  TOL_DP_ENV_MAX = 0.02 ! Maximum spacing in log P, surface CZ (most important for outer layers)
  TOL_DP_CZBASE_MAX = 0.005 ! Maximum spacing in log P near the SCZ base
@@ -136,8 +136,8 @@
 
 ! Timestep criteria; replaces ATIME,DTWIND,DTDIF
  LTRIST = .FALSE. ! Restricts timestep to ensure that the model does not move more than the size of the envelope triangle. Important for the Hertzsprung gap.
- TIME_CORE_MIN = 0.002 ! Minimum X, Y for using "core" vs. "shell" burning criteria
- TIME_DX_CORE_TOT = 0.002 ! Maximum absolute delta X H core burning (main sequence)
+ TIME_CORE_MIN = 0.001 ! Minimum X, Y for using "core" vs. "shell" burning criteria
+ TIME_DX_CORE_TOT = 0.0025 ! Maximum absolute delta X H core burning (main sequence)
  TIME_DX_CORE_FRAC = 0.05 ! Maximum fractional delta X, H core burning (main sequence)
  TIME_DY_CORE_TOT = 0.004 ! Maximum absolute delta Y/Z per timestep (He burning) (red clump/HB)
  TIME_DY_CORE_FRAC = 0.06 ! Maximum fractional delta Y/Z per timestep (He burning) (red clump/HB)
@@ -171,21 +171,21 @@
 
 ! Rotation initialization options
  LWNEW = .TRUE. ! Toggle if converting a non-rotating model to a rotating one               
- WNEW = 8.9405D-6 !3.95D-6 ! Uniform angular velocity imposed if LWNEW = .TRUE (rad/s). If star-disk coupling is being used, should be set to the same value as the disk period. Check your units!
+ WNEW = 5.2663D-6 !3.95D-6 ! Uniform angular velocity imposed if LWNEW = .TRUE (rad/s). If star-disk coupling is being used, should be set to the same value as the disk period. Check your units!
  LDISK = .TRUE. ! Toggle if enforcing co-rotation with accretion disk
- TDISK = 2.81D-4 ! Lifetime of disk locking (Gyr) - 1e5yr = 1e-4 Gyr is the D burning BL. 1e-4 to 1e-2 is the recommended range
- PDISK = 8.9405e-6 ! Rotation period (rad/s) of disk; 8 days (9.0902e-6) is the observed median period in solar-mass disked stars in star forming regions.
+ TDISK = 5.425D-3 ! Lifetime of disk locking (Gyr) - 1e5yr = 1e-4 Gyr is the D burning BL. 1e-4 to 1e-2 is the recommended range
+ PDISK = 5.2663D-6 ! Rotation period (rad/s) of disk; 8 days (9.0902e-6) is the observed median period in solar-mass disked stars in star forming regions.
 
 ! Angular momentum loss options
  LJDOT0 = .TRUE. ! Include angular momentum loss
  LMWIND = .TRUE. ! Adopt Matt et al. 2012 magnetized wind model.
  AWIND = "V13" ! V13 is the standard van Saders & Pinsonneault 2013 model. K97 is the legacy Krishnamurthi et al. 1997 one. CUS is custom. PMMA, PMMB, PMMC,PMMD, PMMM are only used if this is set to CUS.
- FK = 6.164 ! Scale factor for angular momentum loss. Typically used as a free parameter to reproduce the solar rotation at the solar age.
+ FK = 5.759 ! Scale factor for angular momentum loss. Typically used as a free parameter to reproduce the solar rotation at the solar age.
  LROSSBY = .TRUE. ! Scale the loss rate relative to the Rossby number. Should be used with a saturation threshold (WMAX or WMAXSUN below)
  WMAX = 3.0e-4 ! Maximum angular velocity (rad/s) for scaling the mass loss rate and magnetic fields in the scaled solar wind. This is over-written if WMAX_SUN is below 1000; the latter expresses WMAX relative to the solar angular velocity.
  WMAX_SUN = 12.0D0 ! WMAX in units of PMMSOLW. A convenient alternative way of specifying WMAX.
- PMMSOLP = 4.9311! Log P at T=Teff in the solar model, used to compute the equipartition solar B; sets the zero point for field strength in other stars; check against calibrated solar model
- PMMSOLTAU =9.3441D5! Convective overturn timescale (s); sets the relative Rossby numbers for other stars; check against calibrated solar model
+ PMMSOLP = 4.931064 ! Log P at T=Teff in the solar model, used to compute the equipartition solar B; sets the zero point for field strength in other stars; check against calibrated solar model
+ PMMSOLTAU = 9.3492D5! Convective overturn timescale (s); sets the relative Rossby numbers for other stars; check against calibrated solar model
   
 ! Angular momentum transport options
  LINSTB = .FALSE.! Include rotationally induced mixing (y/n) and hydrodynamic angular momentum transport       

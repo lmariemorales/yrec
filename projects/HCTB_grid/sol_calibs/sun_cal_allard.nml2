@@ -104,10 +104,11 @@
  XSBE93 = 21000.0! Cross-section for p(9Be,alpha) (KeV barns)
 
 ! Atmospheric surface boundary condition options
- KTTAU = 3 ! Toggle switch. 0 = Eddington gray 1 = Krishnaswamy 2=legacy (don't use) 3=Kurucz 4=Allard. Note - for 3 and 4, switches to gray if outside table domain.
+ KTTAU = 4 ! Toggle switch. 0 = Eddington gray 1 = Krishnaswamy 2=legacy (don't use) 3=Kurucz 4=Allard. Note - for 3 and 4, switches to gray if outside table domain.
 ! Atmosphere and envelope integrator options. Note - if a tabulated atmosphere is used, only an envelope integration is performed to the outer fitting point.                                             
  TRIDT = .005 ! The code solves for a SBC between 3 models. This is the spacing between 2 of them in Log Teff. The third is a different L at the average Teff.
  TRIDL = .040 ! Spacing between the lower pair and upper point in Log L.
+ LALTPTAU100 = .FALSE. ! Set to .TRUE. for tau=100 for Allard Tables
  
  ATMERR = 1.0D-9 ! Numerical tolerances for atmosphere and envelope solutions
  ATMMAX = 0.25 ! Atmosphere integrator uses an adaptive step. This is the maximum step in log tau.       
@@ -124,7 +125,7 @@
   
 ! Spatial tolerances for allocating mesh points, replaces HPTTOL
  TOL_DM_MIN = 0.5D-10 ! Minimum spacing in mass between points (most important for thin outer fitting points)
- TOL_DM_MAX = 0.04 ! Maximum spacing in log M; important for stellar cores
+ TOL_DM_MAX = 0.02 ! Maximum spacing in log M; important for stellar cores
  TOL_DL_MAX = 0.005 ! Maximum spacing in L/Lsurf; important for energy generating regions
  TOL_DP_ENV_MAX = 0.02 ! Maximum spacing in log P, surface CZ (most important for outer layers)
  TOL_DP_CZBASE_MAX = 0.005 ! Maximum spacing in log P near the SCZ base
@@ -136,8 +137,8 @@
 
 ! Timestep criteria; replaces ATIME,DTWIND,DTDIF
  LTRIST = .FALSE. ! Restricts timestep to ensure that the model does not move more than the size of the envelope triangle. Important for the Hertzsprung gap.
- TIME_CORE_MIN = 0.002 ! Minimum X, Y for using "core" vs. "shell" burning criteria
- TIME_DX_CORE_TOT = 0.002 ! Maximum absolute delta X H core burning (main sequence)
+ TIME_CORE_MIN = 0.001 ! Minimum X, Y for using "core" vs. "shell" burning criteria
+ TIME_DX_CORE_TOT = 0.0025 ! Maximum absolute delta X H core burning (main sequence)
  TIME_DX_CORE_FRAC = 0.05 ! Maximum fractional delta X, H core burning (main sequence)
  TIME_DY_CORE_TOT = 0.004 ! Maximum absolute delta Y/Z per timestep (He burning) (red clump/HB)
  TIME_DY_CORE_FRAC = 0.06 ! Maximum fractional delta Y/Z per timestep (He burning) (red clump/HB)
@@ -173,19 +174,19 @@
  LWNEW = .TRUE. ! Toggle if converting a non-rotating model to a rotating one               
  WNEW = 5.2663D-6 !3.95D-6 ! Uniform angular velocity imposed if LWNEW = .TRUE (rad/s). If star-disk coupling is being used, should be set to the same value as the disk period. Check your units!
  LDISK = .TRUE. ! Toggle if enforcing co-rotation with accretion disk
- TDISK = 2.81D-4 ! Lifetime of disk locking (Gyr) - 1e5yr = 1e-4 Gyr is the D burning BL. 1e-4 to 1e-2 is the recommended range
+ TDISK = 5.425D-3 ! Lifetime of disk locking (Gyr) - 1e5yr = 1e-4 Gyr is the D burning BL. 1e-4 to 1e-2 is the recommended range
  PDISK = 5.2663D-6 ! Rotation period (rad/s) of disk; 8 days (9.0902e-6) is the observed median period in solar-mass disked stars in star forming regions.
 
 ! Angular momentum loss options
  LJDOT0 = .TRUE. ! Include angular momentum loss
  LMWIND = .TRUE. ! Adopt Matt et al. 2012 magnetized wind model.
  AWIND = "V13" ! V13 is the standard van Saders & Pinsonneault 2013 model. K97 is the legacy Krishnamurthi et al. 1997 one. CUS is custom. PMMA, PMMB, PMMC,PMMD, PMMM are only used if this is set to CUS.
- FK = 6.04 ! Scale factor for angular momentum loss. Typically used as a free parameter to reproduce the solar rotation at the solar age.
+ FK = 5.733 ! Scale factor for angular momentum loss. Typically used as a free parameter to reproduce the solar rotation at the solar age.
  LROSSBY = .TRUE. ! Scale the loss rate relative to the Rossby number. Should be used with a saturation threshold (WMAX or WMAXSUN below)
  WMAX = 3.0e-4 ! Maximum angular velocity (rad/s) for scaling the mass loss rate and magnetic fields in the scaled solar wind. This is over-written if WMAX_SUN is below 1000; the latter expresses WMAX relative to the solar angular velocity.
  WMAX_SUN = 12.0D0 ! WMAX in units of PMMSOLW. A convenient alternative way of specifying WMAX.
- PMMSOLP = 4.9311! Log P at T=Teff in the solar model, used to compute the equipartition solar B; sets the zero point for field strength in other stars; check against calibrated solar model
- PMMSOLTAU =9.3441D5! Convective overturn timescale (s); sets the relative Rossby numbers for other stars; check against calibrated solar model
+ PMMSOLP = 4.931064 ! Log P at T=Teff in the solar model, used to compute the equipartition solar B; sets the zero point for field strength in other stars; check against calibrated solar model
+ PMMSOLTAU = 9.3492D5! Convective overturn timescale (s); sets the relative Rossby numbers for other stars; check against calibrated solar model
   
 ! Angular momentum transport options
  LINSTB = .FALSE.! Include rotationally induced mixing (y/n) and hydrodynamic angular momentum transport       
